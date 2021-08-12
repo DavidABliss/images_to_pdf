@@ -4,8 +4,8 @@ import re
 from PIL import Image
 
 if not len(sys.argv) >= 2:
-    print('Usage: python tiff_to_pdf_uncompressed.py <path_to_folder>')
-    sys.exit('To run recursively on several subdirectories: python tiff_to_pdf_uncompressed.py <path_to_root_folder> -r')
+    print('Usage: python tiffs_to_pdf_uncompressed.py <path_to_folder>')
+    sys.exit('To run recursively on several subdirectories: python tiffs_to_pdf_uncompressed.py <path_to_root_folder> -r')
 
 if len(sys.argv) == 2:
     tiffsList = []
