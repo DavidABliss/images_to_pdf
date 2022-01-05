@@ -1,15 +1,17 @@
-import sys
 import os
 import re
-from PIL import Image
+from PIL import Image,ImageSequence
+import argparse
 
-if not len(sys.argv) >= 2:
-    print('Usage: python tiffs_to_pdf_uncompressed.py <path_to_folder>')
-    sys.exit('To run recursively on several subdirectories: python tiffs_to_pdf_uncompressed.py <path_to_root_folder> -r')
+parser = argparse.ArgumentParser()
+parser.add_argument('directory', help="directory containing tiffs to be converted to pdf", action="store", nargs='?', default=os.getcwd())
+parser.add_argument('-r', '--recursive', help="recursively create pdfs in all subdirectories containing tiffs", action="store_true", dest="r", required=False)
 
-if len(sys.argv) == 2:
+args = parser.parse_args()
+
+if not args.r:
     tiffsList = []
-    folderPath = sys.argv[1]
+    folderPath = args.directory
     folderPath = folderPath.replace('\\', '/')
     folderName = folderPath.split('/')[-1]
     pdfPath = folderPath + '/' + folderName + '.pdf'
@@ -19,13 +21,23 @@ if len(sys.argv) == 2:
             tiffsList.append(folderPath + '/' + file)
     tiffsList.sort()
     imageList = []
-    for tiff in tiffsList:
-        imageList.append(Image.open(tiff))
-    imageList[0].save(pdfPath, save_all=True, append_images=imageList[1:])
-        
+    try:
+        for tiff in tiffsList:
+            img = Image.open(tiff)
+            for frame in ImageSequence.Iterator(img):
+                if img.mode == '1':
+                    frame = frame.convert('L')
+                if img.mode == 'RGBA':
+                    frame = frame.convert('RGB')
+                if not os.path.exists(pdfPath):
+                    frame.save(pdfPath)
+                elif os.path.exists(pdfPath):
+                    frame.save(pdfPath, append=True)
+    except IndexError:
+        print('Error: \"' + args.directory + '\" contains no TIFFs')        
 
-elif sys.argv[2] == '-r':
-    rootFolder = sys.argv[1]
+elif args.r:
+    rootFolder = args.directory
     rootFolder = rootFolder.replace('\\','/')
     tiffFolders = []
     for root, dirs, files in os.walk(rootFolder):
@@ -51,5 +63,13 @@ elif sys.argv[2] == '-r':
         print('Creating PDF from folder: ' + folder)
         imageList = []
         for tiff in tiffsList:
-            imageList.append(Image.open(tiff))
-        imageList[0].save(pdfPath, save_all=True, append_images=imageList[1:])
+            img = Image.open(tiff)
+            for frame in ImageSequence.Iterator(img):
+                if img.mode == '1':
+                    frame = frame.convert('L')
+                if img.mode == 'RGBA':
+                    frame = frame.convert('RGB')
+                if not os.path.exists(pdfPath):
+                    frame.save(pdfPath)
+                elif os.path.exists(pdfPath):
+                    frame.save(pdfPath, append=True)
