@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser(description='Compile all TIFFs in a directory i
 
 parser.add_argument('directory', help="directory containing tiffs to be converted to pdf", action="store", nargs='?', default=os.getcwd())
 parser.add_argument('-r', '--recursive', help="recursively create pdfs in all subdirectories containing tiffs", action="store_true", dest="r", required=False)
+parser.add_argument('-o', '--output', help="specify an output directory for all created PDFs", action="store", dest="o", required=False)
 
 args = parser.parse_args()
 
@@ -51,7 +52,11 @@ if not args.r:
     folderPath = args.directory
     folderPath = folderPath.replace('\\', '/')
     folderName = folderPath.split('/')[-1]
-    pdfPath = os.path.join(folderPath,folderName + '.pdf')
+    pdfName = folderName + '.pdf'
+    if args.o:
+        pdfPath = os.path.join(args.o, pdfName)
+    else:
+        pdfPath = os.path.join(folderPath, pdfName)
     pdfPath = pdfPath.replace('\\', '/')
     fileList = os.listdir(folderPath)
     pageNum = 0
@@ -82,13 +87,16 @@ elif args.r:
     for folder in tiffFolders:
         print('TIFFs found in ' + folder)
         tiffsList = []
-        pdfName = folder.split('/')[-1]
+        pdfName = folder.split('/')[-1] + '.pdf'
         genericTest = re.match('tiffs|tiff|master|masters', pdfName.lower())
         if genericTest:
-            folderName = pdfName
-            pdfName = folder.split('/')[-2]
-            print('"' + folderName + '" is a generic folder name. PDF will be named "' + pdfName + '.pdf"')
-        pdfPath = os.path.join(folder,pdfName + '.pdf')
+            folderName = folder.split('/')[-1]
+            pdfName = folder.split('/')[-2] + '.pdf'
+            print('"' + folderName + '" is a generic folder name. PDF will be named "' + pdfName)
+        if args.o:
+            pdfPath = os.path.join(args.o, pdfName)
+        else:
+            pdfPath = os.path.join(folder, pdfName)
         pdfPath = pdfPath.replace('\\', '/')
         fileList = os.listdir(folder)
         pageNum = 0
