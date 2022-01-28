@@ -19,7 +19,7 @@ To run the script recursively (i.e. including any subdirectories containing TIFF
     
 When run recursively, the script will identify any folders containing TIFF files and create a PDF one directory above the TIFFs themselves. The PDF file will be named according to the folder containing the TIFFs. If that folder is named "TIFF", "TIFFs", "Master", or "Masters", the PDF will be given the name of that folder's parent folder, in an attempt to capture the object name for the PDF. Additional "generic" folder names to be ignored can be added to the "genericTest" list on line 91.
 
-To specify a custom PDF output directory, use the <code>-r --output</code> switch and provide the path to a directory:
+To specify a custom PDF output directory, use the <code>-o --output</code> switch and provide the path to a directory:
 
 	python tiffs_to_pdf.py <path_to_directory> -o <path_to_output_directory>
 	
