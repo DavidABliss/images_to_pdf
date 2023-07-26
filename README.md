@@ -1,5 +1,5 @@
 # images_to_pdf
-Combine all images of a given format in a directory into a single multi-page PDF, or run recursively to create one PDF per subdirectory of images
+Combine all images of a given format in a directory into a single multi-page PDF, or run recursively to create one PDF per subdirectory of images.
 
 This script combines a directory (or several directories) of images to a single PDF. Because this script uses JPEG compression to reduce the size of the PDF file output, the resulting PDFs may or may not be considered suitable for publishing.
 
