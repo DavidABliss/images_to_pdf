@@ -6,14 +6,18 @@ import sys
 from PIL import Image, ImageSequence, PdfParser
 from PyPDF2 import PdfFileWriter, PdfFileReader
 
-parser = argparse.ArgumentParser(description='Compile all TIFFs in a directory into a single PDF. '
-                                 'If no TIFF directory is provided, the script will run in the current working directory. '
-                                 'Optionally, run recursively on all subdirectories. ')
+parser = argparse.ArgumentParser(description='Compile all images of a given format in a directory into a single PDF. '
+                                 'If no image directory is provided, the script will run in the current working directory. '
+                                 'If no image format is provided, the script will search for TIFFs by default. '
+                                 'Optionally, run recursively on all subdirectories. '
+                                 'Optionally, specify an output directory for PDF files other than the directory containing images themselves. '
+                                 'Optionally, OCR the created PDF files to allow them to be searched. ')
 
 parser.add_argument('directory', help="directory containing tiffs to be converted to pdf", action="store", nargs='?', default=os.getcwd())
 parser.add_argument('-r', '--recursive', help="recursively create pdfs in all subdirectories containing tiffs", action="store_true", dest="r", required=False)
 parser.add_argument('-o', '--output', help="specify an output directory for all created PDFs", action="store", dest="o", required=False)
 parser.add_argument('-t', '--tesseract', help="apply an OCR text layer using Tesseract", action="store_true", dest="t", required=False)
+parser.add_argument('-f', '--format', help="specify an image file format to compile into a PDF, instead of TIFF", action="store", dest="f", default='tif', required=False)
 
 args = parser.parse_args()
 
@@ -22,6 +26,16 @@ if args.t:
 
 pageNum = 0
 
+inputFormat = args.f
+inputFormat = inputFormat.lower()
+if inputFormat == 'jpeg':
+    inputFormat = 'jpg'
+if inputFormat == 'tiff':
+    inputFormat = 'tif'
+if inputFormat != 'jpg':
+    if inputFormat != 'tif':
+        if inputFormat != 'png':
+            sys.exit('Invalid input format specified. Accepted file formats are TIFF, JPEG, and PNG')
 
 # Append TIFFs to an existing PDF, or create a new PDF if needed.
 # Use pageNum to determine if a new PDF needs to be created, in case a PDF
@@ -34,8 +48,8 @@ def converter(imageList, pdfPath):
     pdf_pages = []
     try:
         print('Creating PDF: ' + pdfPath + '\n')
-        for tiff in imageList:
-            img = Image.open(tiff)
+        for imageFile in imageList:
+            img = Image.open(imageFile)
             if args.t:
                 pdf = pytesseract.image_to_pdf_or_hocr(img, lang='eng', extension='pdf') #add a condition where this is only used if the ocr option is enabled
                 pdf_pages.append(pdf)
@@ -62,13 +76,13 @@ def converter(imageList, pdfPath):
                         print('Error: Existing PDF fragment found at ' + pdfPath + ', possibly because this script was previously run and interrupted. Try deleting the fragment and running tiffs_to_pdf again')
                     pageNum += 1
     except IndexError:
-        print('Error: \"' + args.directory + '\" contains no TIFFs\n')
+        print('Error: \"' + args.directory + '\" contains no images of the specified format\n')
 
 
 # If the recursive option wasn't passed, create the list of TIFFs in the named
 # folder (or in the current working directory) and create the PDF in place there
 if not args.r:
-    tiffsList = []
+    imagesList = []
     folderPath = args.directory
     folderPath = folderPath.replace('\\', '/')
     folderName = folderPath.split('/')[-1]
@@ -89,12 +103,12 @@ if not args.r:
     fileList = os.listdir(folderPath)
     pageNum = 0
     for file in fileList:
-        if file.lower().endswith('.tif'):
-            tiffsList.append(os.path.join(folderPath, file))
-    tiffsList.sort()
-    if len(tiffsList) == 0:
-        sys.exit('No TIFFs found in folderPath. Choose another folder or use -r to run recursively')
-    converter(tiffsList, pdfPath)    
+        if file.lower().endswith(inputFormat):
+            imagesList.append(os.path.join(folderPath, file))
+    imagesList.sort()
+    if len(imagesList) == 0:
+        sys.exit('No ' + inputFormat + ' images found in folderPath. Choose another folder or use -r to run recursively')
+    converter(imagesList, pdfPath)    
        
 # If the recursive option was passed, find folders containing TIFFs. For each
 # such folder, assemble TIFFs into a PDF. If the folder has a generic name,
@@ -102,25 +116,25 @@ if not args.r:
 elif args.r:
     rootFolder = args.directory
     rootFolder = rootFolder.replace('\\','/')
-    print('Searching recursively for TIFFs within ' + rootFolder + '\n')
-    tiffFolders = []
+    print('Searching recursively for ' + inputFormat + 's within ' + rootFolder + '\n')
+    imagesFolders = []
     for root, dirs, files in os.walk(rootFolder):
         for file in files:
-            if file.lower().endswith('.tif'):
+            if file.lower().endswith(inputFormat):
                 folder = os.path.join(root)
                 folder = folder.replace('\\','/')
-                if folder not in tiffFolders:
-                    tiffFolders.append(folder)
+                if folder not in imagesFolders:
+                    imagesFolders.append(folder)
 
-    for folder in tiffFolders:
-        print('TIFFs found in ' + folder)
-        tiffsList = []
+    for folder in imagesFolders:
+        print(inputFormat + 's found in ' + folder)
+        imagesList = []
         pdfName = folder.split('/')[-1] + '.pdf'
-        genericTest = re.match('tiffs|tiff|master|masters', pdfName.lower())
+        genericTest = re.match('tiffs|tiff|tif|tifs|jpegs|jpeg|jpg|jpgs|png|pngs|master|masters|derivative|derivatives', pdfName.lower())
         if genericTest:
             folderName = folder.split('/')[-1]
             pdfName = folder.split('/')[-2] + '.pdf'
-            print('CHANGING OUTPUT: "' + folderName + '" is a generic folder name. Using parent folder name. PDF will be named "' + pdfName)
+            print('CHANGING OUTPUT: "' + folderName + '" is a generic folder name. Using parent folder name. PDF will be named "' + pdfName + '"')
         if args.o:
             pdfPath = os.path.join(args.o, pdfName)
         else:
@@ -138,7 +152,7 @@ elif args.r:
         fileList = os.listdir(folder)
         pageNum = 0
         for file in fileList:
-            if file.lower().endswith('.tif'):
-                tiffsList.append(os.path.join(folder,file))
-        tiffsList.sort()
-        converter(tiffsList, pdfPath)
+            if file.lower().endswith(inputFormat):
+                imagesList.append(os.path.join(folder,file))
+        imagesList.sort()
+        converter(imagesList, pdfPath)
