@@ -23,4 +23,11 @@ To specify a custom PDF output directory, use the <code>-o --output</code> switc
 
 	python tiffs_to_pdf.py <path_to_directory> -o <path_to_output_directory>
 	
-The output switch can be used with or without the recursive switch.
+An OCR text layer can be applied to the output PDF file(s) using the <code>-t --tesseract</code> switch:
+	
+	python tiffs_to_pdf.py <path_to_directory> -t
+
+The tesseract switch requires that pytesseract be installed in your working environment. In Windows, Tesseract must be installed and mapped to the <code>PATH</code> system environment variable.
+
+All switches can be used in combination with one another.
+
