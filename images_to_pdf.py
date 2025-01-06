@@ -4,7 +4,7 @@ import io
 import argparse
 import sys
 from PIL import Image, ImageSequence, PdfParser
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF2 import PdfWriter, PdfReader
 
 parser = argparse.ArgumentParser(description='Compile all images of a given format in a directory into a single PDF. '
                                  'If no image directory is provided, the script will run in the current working directory. '
@@ -53,10 +53,10 @@ def converter(imageList, pdfPath):
             if args.t:
                 pdf = pytesseract.image_to_pdf_or_hocr(img, lang='eng', extension='pdf') #add a condition where this is only used if the ocr option is enabled
                 pdf_pages.append(pdf)
-                pdf_writer = PdfFileWriter()
+                pdf_writer = PdfWriter()
                 for page in pdf_pages:
-                    pdf = PdfFileReader(io.BytesIO(page))
-                    pdf_writer.addPage(pdf.getPage(0))
+                    pdf = PdfReader(io.BytesIO(page))
+                    pdf_writer.add_page(pdf.pages[0])
                 file = open(pdfPath, "w+b")
                 pdf_writer.write(file)
                 file.close()
